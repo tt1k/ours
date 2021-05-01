@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'text_widget.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 void main() => runApp(MyApp());
 
@@ -30,6 +32,18 @@ class MyHomePageState extends State<MyHomePage> {
 
   GlobalKey<TextWidgetState> textKey = GlobalKey();
 
+  showToast(String str) {
+    Fluttertoast.showToast(
+      msg: str + "～",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Color(0xFFD9A58F),
+      textColor: Colors.white,
+      fontSize: 16.0
+    );
+  }
+
   paddingWidget(double padding) {
     return Padding(
       padding: EdgeInsets.all(padding),
@@ -37,6 +51,8 @@ class MyHomePageState extends State<MyHomePage> {
   }
 
   headWidget() {
+    String headImageUrl = "https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/head.jpg";
+
     return Container(
       margin: EdgeInsets.only(top: 30.0),
       alignment: Alignment.center,
@@ -48,7 +64,14 @@ class MyHomePageState extends State<MyHomePage> {
               child: SizedBox(
                 width: 150,
                 height: 150,
-                child: Image.asset("image/0.jpg"),
+                child: CachedNetworkImage(
+                  imageUrl: headImageUrl,
+                  progressIndicatorBuilder: (context, url, downloadProgress) => CircularProgressIndicator(value: downloadProgress.progress),
+                  errorWidget: (context, url, error) {
+                    showToast("头像加载好像出了点问题");
+                    return Image.asset("image/head_error.jpg", fit: BoxFit.fill,);
+                  }
+                ),
               ),
             ),
           )
@@ -123,7 +146,8 @@ class MyHomePageState extends State<MyHomePage> {
           ],
         ),
         child: Text(
-          """我的梦里出现过一只猫
+"""
+我的梦里出现过一只猫
 是连续五天的梦
 我和那只猫从不熟到熟
 我把它放在书包里
@@ -147,12 +171,13 @@ class MyHomePageState extends State<MyHomePage> {
 
   webImageWidget(String url) {
     return CachedNetworkImage(
-        imageUrl: url,
-        progressIndicatorBuilder: (context, url, downloadProgress) => CircularProgressIndicator(value: downloadProgress.progress),
-        errorWidget: (context, url, error) {
-          print("fail");
-          return Image.asset("image/error.jpg");
-        }
+      imageUrl: url,
+      fit: BoxFit.fitWidth,
+      progressIndicatorBuilder: (context, url, downloadProgress) => CircularProgressIndicator(value: downloadProgress.progress),
+      errorWidget: (context, url, error) {
+        showToast("图片加载好像出了点问题");
+        return Image.asset("image/error.jpg", fit: BoxFit.fitWidth);
+      }
     );
   }
 
@@ -185,17 +210,64 @@ class MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+  
+  List<int> genRandomNumbers(int totalCount, int needCount) {
+    List<int> list = [];
+    int count = 0;
+    while (count < needCount) {
+      int index = Random().nextInt(totalCount) + 1;
+      if (!list.contains(index)) {
+        list.add(index);
+        count++;
+      }
+    }
+    return list;
+  }
 
+  String genImageUrl(int index) {
+    return "https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/images/" + index.toString() + ".jpg";
+  }
+  
   imageListWidget() {
+    int needCount = 3;
+    int totalCount = 10;
+    List<int> list = genRandomNumbers(totalCount, needCount);
+
     return Container(
       margin: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 580.0),
       child: Column(
         children: [
-          imageWidget("https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/1.jpg", Alignment.centerLeft),
+          imageWidget(genImageUrl(list[0]), Alignment.centerLeft),
           paddingWidget(8.0),
-          imageWidget("https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/2.jpg", Alignment.centerRight),
+          imageWidget(genImageUrl(list[1]), Alignment.centerRight),
           paddingWidget(8.0),
-          imageWidget("https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/3.jpg", Alignment.centerLeft),
+          imageWidget(genImageUrl(list[2]), Alignment.centerLeft),
+        ],
+      ),
+    );
+  }
+
+  backgroundImageUrl() {
+    int bgTotalCount = 10;
+    int bgSerial = Random().nextInt(bgTotalCount) + 1;
+    String url = "https://icedotaku-img.oss-cn-shenzhen.aliyuncs.com/ours/bg/" + bgSerial.toString() + ".jpg";
+
+    return url;
+  }
+
+  scrollContentView() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          paddingWidget(8.0),
+          headWidget(),
+          paddingWidget(8.0),
+          dateWidget(),
+          paddingWidget(8.0),
+          mottoWidget(),
+          paddingWidget(8.0),
+          imageListWidget(),
+          endWidget(),
         ],
       ),
     );
@@ -203,32 +275,32 @@ class MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
-    // textKey.currentState.timeChange();
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("image/bg.jpg"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              paddingWidget(8.0),
-              headWidget(),
-              paddingWidget(8.0),
-              dateWidget(),
-              paddingWidget(8.0),
-              mottoWidget(),
-              paddingWidget(8.0),
-              imageListWidget(),
-              endWidget(),
-            ],
-          ),
-        )
+      body: CachedNetworkImage(
+        imageUrl: backgroundImageUrl(),
+        imageBuilder: (context, imageProvider) {
+          return Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: imageProvider,
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: scrollContentView(),
+          );
+        },
+        errorWidget: (context, url, error) {
+          showToast("背景图片加载好像出了点问题");
+          return Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("image/bg.jpg"),
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+            child: scrollContentView(),
+          );
+        }
       ),
     );
   }

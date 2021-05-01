@@ -13,6 +13,9 @@ class TextWidget extends StatefulWidget {
 }
 
 class TextWidgetState extends State<TextWidget> {
+
+  Timer timer;
+
   int year = 0;
   int month = 0;
   int day = 0;
@@ -22,7 +25,7 @@ class TextWidgetState extends State<TextWidget> {
   DateTime startDate = DateTime(2018, 11, 3, 0, 0);
 
   timeChange() {
-    Timer.periodic(Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
       Duration difference = DateTime.now().difference(startDate);
       year = (difference.inDays / 365).floor();
       month = ((difference.inDays % 365) / 30).floor();
@@ -36,8 +39,14 @@ class TextWidgetState extends State<TextWidget> {
 
   @override
   void initState() {
-    super.initState();
     timeChange();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
   }
 
   @override
